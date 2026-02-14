@@ -1,0 +1,4 @@
+app:
+  env: production
+security:
+  auth_required: true

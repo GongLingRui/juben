@@ -1,0 +1,4 @@
+app:
+  env: development
+security:
+  auth_required: false

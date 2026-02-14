@@ -1,0 +1,64 @@
+[
+  {
+    "id": "script_creation_pipeline",
+    "name": "剧本创作流水线",
+    "description": "从策划到创作再到评估的基础流水线",
+    "steps": [
+      {
+        "id": "plan",
+        "name": "策划",
+        "agent_id": "short_drama_planner_agent",
+        "input_template": "请为以下需求完成短剧策划：\n{user_input}"
+      },
+      {
+        "id": "create",
+        "name": "创作",
+        "agent_id": "short_drama_creator_agent",
+        "input_template": "基于策划结果创作完整内容：\n{steps.plan.output}\n\n用户需求：{user_input}"
+      },
+      {
+        "id": "evaluate",
+        "name": "评估",
+        "agent_id": "short_drama_evaluation_agent",
+        "input_template": "请对以下内容进行评估：\n{steps.create.output}"
+      }
+    ]
+  },
+  {
+    "id": "creative_pipeline_full",
+    "name": "创意到分镜全链路",
+    "description": "从创意 → 大纲 → 分集 → 分场 → 分镜的自动化管线",
+    "steps": [
+      {
+        "id": "idea",
+        "name": "创意",
+        "agent_id": "short_drama_planner_agent",
+        "input_template": "基于以下需求生成创意方向与核心卖点：\n{user_input}"
+      },
+      {
+        "id": "outline",
+        "name": "大纲",
+        "agent_id": "story_summary_generator_agent",
+        "input_template": "基于创意生成完整故事大纲：\n{steps.idea.output}"
+      },
+      {
+        "id": "episodes",
+        "name": "分集",
+        "agent_id": "major_plot_points_agent",
+        "input_template": "基于大纲拆分分集大纲（含集标题与集目标）：\n{steps.outline.output}"
+      },
+      {
+        "id": "scenes",
+        "name": "分场",
+        "agent_id": "detailed_plot_points_agent",
+        "input_template": "基于分集大纲拆分分场（含场景目标/冲突/情绪）：\n{steps.episodes.output}"
+      },
+      {
+        "id": "storyboard",
+        "name": "分镜",
+        "agent_id": "mind_map_agent",
+        "input_template": "基于分场生成可执行分镜/镜头设计要点：\n{steps.scenes.output}"
+      }
+    ]
+  }
+]

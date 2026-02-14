@@ -1,0 +1,262 @@
+/**
+ * Agent 服务
+ */
+
+import api from './api';
+import type { Agent, ModelListResponse } from '@/types';
+
+// ==================== 后端数据类型 ====================
+
+interface BackendAgent {
+  id: string;
+  name: string;
+  display_name?: string;
+  displayName?: string;
+  description: string;
+  category: string;
+  icon?: string;
+  model?: string;
+  api_endpoint?: string;
+  apiEndpoint?: string;
+  features?: string[];
+  capabilities?: string[];
+  input_example?: string;
+  inputExample?: string;
+  output_example?: string;
+  outputExample?: string;
+  status?: 'active' | 'inactive' | 'deprecated';
+}
+
+interface RecommendedModelResponse {
+  model_id: string;
+  model_name: string;
+  provider: string;
+  reason: string;
+}
+
+interface ModelsByTypeResponse {
+  text: ModelInfo[];
+  vision: ModelInfo[];
+  image_generation: ModelInfo[];
+  video_generation: ModelInfo[];
+}
+
+interface ModelInfo {
+  id: string;
+  name: string;
+  provider: string;
+  type: string;
+  context_length?: number;
+}
+
+interface SearchResult {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  relevance_score: number;
+}
+
+/**
+ * 将后端蛇形命名转换为前端驼峰命名
+ */
+function mapBackendAgentToAgent(backendAgent: BackendAgent): Agent {
+  return {
+    id: backendAgent.id,
+    name: backendAgent.name,
+    displayName: backendAgent.display_name || backendAgent.displayName,
+    description: backendAgent.description,
+    category: backendAgent.category,
+    icon: backendAgent.icon,
+    model: backendAgent.model,
+    apiEndpoint: backendAgent.api_endpoint || backendAgent.apiEndpoint,
+    features: backendAgent.features || [],
+    capabilities: backendAgent.capabilities || [],
+    inputExample: backendAgent.input_example || backendAgent.inputExample || '',
+    outputExample: backendAgent.output_example || backendAgent.outputExample || '',
+    status: backendAgent.status || 'active',
+  };
+}
+
+/**
+ * 获取所有可用的 Agents（从后端API）
+ */
+export async function getAgents(): Promise<Agent[]> {
+  try {
+    // 优先从后端API获取
+    const response = await api.get<{ success: boolean; agents?: BackendAgent[]; total?: number }>('/juben/agents/list');
+
+    if (response.success && response.agents) {
+      return response.agents.map(mapBackendAgentToAgent);
+    }
+
+    // 如果API失败，回退到本地配置
+    const { AGENTS_CONFIG } = await import('@/config/agents');
+    return AGENTS_CONFIG;
+  } catch (error) {
+    console.error('Failed to load agents from API, using local config:', error);
+    // 回退到本地配置
+    try {
+      const { AGENTS_CONFIG } = await import('@/config/agents');
+      return AGENTS_CONFIG;
+    } catch {
+      return [];
+    }
+  }
+}
+
+/**
+ * 获取 Agent 信息（从后端API）
+ */
+export async function getAgentInfo(agentId: string): Promise<Agent | null> {
+  try {
+    // 优先从后端API获取
+    const response = await api.get<any>(`/juben/agents/${agentId}`);
+    if (response) {
+      const agentData = response.agent || response.data || response;
+      return mapBackendAgentToAgent(agentData);
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to get agent info from API:', error);
+    // 回退到本地配置
+    try {
+      const agents = await getAgents();
+      return agents.find(a => a.id === agentId) || null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * 获取可用模型列表
+ */
+export async function getModels(provider: string = 'zhipu'): Promise<ModelListResponse> {
+  try {
+    return await api.get<ModelListResponse>('/juben/models', { provider });
+  } catch (error) {
+    console.error('Failed to get models:', error);
+    return {
+      success: false,
+      provider,
+      models: [],
+      default_model: 'glm-4-flash',
+      purpose_models: {},
+      total_count: 0,
+    };
+  }
+}
+
+/**
+ * 获取推荐模型
+ */
+export async function getRecommendedModel(purpose: string): Promise<string> {
+  try {
+    const response = await api.get<{ success: boolean; recommended_model?: RecommendedModelResponse }>(
+      '/juben/models/recommend',
+      { purpose }
+    );
+    return response.recommended_model?.model_id || response.recommended_model?.name || 'glm-4-flash';
+  } catch (error) {
+    console.error('Failed to get recommended model:', error);
+    return 'glm-4-flash';
+  }
+}
+
+/**
+ * 按类型获取模型
+ */
+export async function getModelsByType(): Promise<ModelsByTypeResponse> {
+  try {
+    const response = await api.get<{ success: boolean; models?: ModelsByTypeResponse }>(
+      '/juben/models/types'
+    );
+    // 后端返回格式: { success: true, models: { text: [], vision: [], ... } }
+    return response.models || {
+      text: [],
+      vision: [],
+      image_generation: [],
+      video_generation: [],
+    };
+  } catch (error) {
+    console.error('Failed to get models by type:', error);
+    return {
+      text: [],
+      vision: [],
+      image_generation: [],
+      video_generation: [],
+    };
+  }
+}
+
+/**
+ * 搜索 Agents（从后端API）
+ */
+export async function searchAgents(query: string): Promise<Agent[]> {
+  try {
+    // 从后端API搜索
+    const response = await api.get<{ success: boolean; results?: BackendAgent[] }>('/juben/agents/search', { query });
+    if (response.success && response.results) {
+      return response.results.map(mapBackendAgentToAgent);
+    }
+    return [];
+  } catch (error) {
+    console.error('Failed to search agents from API:', error);
+    // 回退到本地配置
+    try {
+      const { searchAgents: search } = await import('@/config/agents');
+      return search(query);
+    } catch {
+      return [];
+    }
+  }
+}
+
+/**
+ * 按分类获取 Agents（从后端API）
+ */
+export async function getAgentsByCategory(category: string): Promise<Agent[]> {
+  try {
+    // 从后端API获取
+    const response = await api.get<{ success: boolean; agents?: BackendAgent[] }>('/juben/agents/list', { category });
+    if (response.success && response.agents) {
+      return response.agents.map(mapBackendAgentToAgent);
+    }
+    return [];
+  } catch (error) {
+    console.error('Failed to get agents by category from API:', error);
+    // 回退到本地配置
+    try {
+      const { getAgentsByCategory: getByCategory } = await import('@/config/agents');
+      return getByCategory(category);
+    } catch {
+      return [];
+    }
+  }
+}
+
+/**
+ * 获取Agent分类列表（从后端API）
+ */
+export async function getAgentCategories(): Promise<{
+  categories: Record<string, { name: string; icon: string; description: string }>;
+  counts: Record<string, number>;
+  total: number;
+}> {
+  try {
+    const response = await api.get<any>('/juben/agents/categories');
+    return {
+      categories: response.categories || {},
+      counts: response.counts || {},
+      total: response.total || 0,
+    };
+  } catch (error) {
+    console.error('Failed to get agent categories:', error);
+    return {
+      categories: {},
+      counts: {},
+      total: 0,
+    };
+  }
+}

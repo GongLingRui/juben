@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pre-commit hook - 在每次提交前运行安全检查
+
+echo "🔍 运行安全检查..."
+
+# 运行安全检查脚本
+python scripts/security_check.py
+
+# 如果检查失败，阻止提交
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "⚠️  安全检查失败！请修复问题后再提交。"
+    echo ""
+    echo "💡 如需跳过检查（不推荐），使用："
+    echo "   git commit --no-verify"
+    echo ""
+    exit 1
+fi
+
+echo "✅ 安全检查通过！"
+exit 0

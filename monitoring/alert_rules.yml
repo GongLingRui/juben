@@ -1,0 +1,465 @@
+# Prometheus Alert Rules for Juben Project
+# Critical alerts for monitoring the health of the script creation agent system
+
+groups:
+  - name: juben_api_alerts
+    interval: 30s
+    rules:
+      # API Availability Alerts
+      - alert: JubenAPIDown
+        expr: up{job="juben-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: juben-api
+        annotations:
+          summary: "Juben API is down"
+          description: "The Juben API has been down for more than 1 minute on {{ $labels.instance }}"
+          runbook_url: "https://docs.example.com/runbooks/juben-api-down"
+
+      - alert: JubenAPIHighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{job="juben-api",status=~"5.."}[5m])
+            /
+            rate(http_requests_total{job="juben-api"}[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: juben-api
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      - alert: JubenAPIVeryHighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{job="juben-api",status=~"5.."}[5m])
+            /
+            rate(http_requests_total{job="juben-api"}[5m])
+          ) > 0.15
+        for: 2m
+        labels:
+          severity: critical
+          service: juben-api
+        annotations:
+          summary: "Very high API error rate"
+          description: "API error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      # Response Time Alerts
+      - alert: JubenAPIHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket{job="juben-api"}[5m])
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: juben-api
+        annotations:
+          summary: "High API latency"
+          description: "P95 latency is {{ $value }}s for {{ $labels.instance }}"
+
+      - alert: JubenAPIVeryHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket{job="juben-api"}[5m])
+          ) > 10
+        for: 5m
+        labels:
+          severity: critical
+          service: juben-api
+        annotations:
+          summary: "Very high API latency"
+          description: "P95 latency is {{ $value }}s for {{ $labels.instance }}"
+
+  - name: juben_llm_alerts
+    interval: 30s
+    rules:
+      # LLM Provider Alerts
+      - alert: LLMProviderHighFailureRate
+        expr: |
+          (
+            rate(llm_requests_total{status="failed"}[5m])
+            /
+            rate(llm_requests_total[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: llm-client
+        annotations:
+          summary: "High LLM provider failure rate"
+          description: "{{ $labels.provider }} failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: LLMProviderVeryHighFailureRate
+        expr: |
+          (
+            rate(llm_requests_total{status="failed"}[5m])
+            /
+            rate(llm_requests_total[5m])
+          ) > 0.3
+        for: 2m
+        labels:
+          severity: critical
+          service: llm-client
+        annotations:
+          summary: "Very high LLM provider failure rate"
+          description: "{{ $labels.provider }} failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: LLMHighTokenConsumption
+        expr: |
+          sum(rate(llm_tokens_total[5m])) > 10000
+        for: 15m
+        labels:
+          severity: warning
+          service: llm-client
+        annotations:
+          summary: "High token consumption rate"
+          description: "Token consumption rate is {{ $value }} tokens/sec"
+
+      - alert: LLMResponseTimeHigh
+        expr: |
+          histogram_quantile(0.95,
+            rate(llm_request_duration_seconds_bucket[5m])
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+          service: llm-client
+        annotations:
+          summary: "High LLM response time"
+          description: "P95 LLM response time is {{ $value }}s for {{ $labels.provider }}"
+
+  - name: juben_database_alerts
+    interval: 30s
+    rules:
+      # PostgreSQL Alerts
+      - alert: PostgreSQLConnectionFailure
+        expr: up{job="postgresql"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL database connection failed"
+          description: "Cannot connect to PostgreSQL for more than 2 minutes"
+
+      - alert: PostgreSQLSlowQuery
+        expr: |
+          histogram_quantile(0.95,
+            rate(postgresql_query_duration_seconds_bucket[5m])
+          ) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Slow PostgreSQL queries"
+          description: "P95 query duration is {{ $value }}s"
+
+      - alert: PostgreSQLConnectionPoolExhausted
+        expr: |
+          postgresql_connections_active / postgresql_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of connections in use"
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute"
+
+      - alert: RedisMemoryHigh
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis is using {{ $value | humanizePercentage }} of max memory"
+
+      - alert: RedisConnectionCountHigh
+        expr: redis_connected_clients > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "High Redis connection count"
+          description: "Redis has {{ $value }} connected clients"
+
+      - alert: RedisKeyEviction
+        expr: rate(redis_evicted_keys_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "High Redis key eviction rate"
+          description: "Redis is evicting {{ $value }} keys/sec"
+
+      # Milvus Alerts
+      - alert: MilvusDown
+        expr: up{job="milvus"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: vector-db
+        annotations:
+          summary: "Milvus is down"
+          description: "Milvus vector database has been down for more than 2 minutes"
+
+      - alert: MilvusSlowQuery
+        expr: |
+          histogram_quantile(0.95,
+            rate(milvus_query_duration_seconds_bucket[5m])
+          ) > 10
+        for: 10m
+        labels:
+          severity: warning
+          service: vector-db
+        annotations:
+          summary: "Slow Milvus queries"
+          description: "P95 Milvus query duration is {{ $value }}s"
+
+  - name: juben_storage_alerts
+    interval: 30s
+    rules:
+      # MinIO Alerts
+      - alert: MinIODown
+        expr: up{job="minio"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: storage
+        annotations:
+          summary: "MinIO is down"
+          description: "MinIO storage service has been down for more than 2 minutes"
+
+      - alert: MinIODiskSpaceHigh
+        expr: |
+          minio_storage_used_bytes / minio_storage_total_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "MinIO disk space high"
+          description: "MinIO is using {{ $value | humanizePercentage }} of disk space"
+
+      - alert: MinIODiskSpaceCritical
+        expr: |
+          minio_storage_used_bytes / minio_storage_total_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          service: storage
+        annotations:
+          summary: "MinIO disk space critical"
+          description: "MinIO is using {{ $value | humanizePercentage }} of disk space"
+
+  - name: juben_agent_alerts
+    interval: 30s
+    rules:
+      # Agent Execution Alerts
+      - alert: AgentHighFailureRate
+        expr: |
+          (
+            rate(agent_requests_total{status="failed"}[5m])
+            /
+            rate(agent_requests_total[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "High agent failure rate"
+          description: "{{ $labels.agent_name }} failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: AgentExecutionTimeHigh
+        expr: |
+          histogram_quantile(0.95,
+            rate(agent_execution_duration_seconds_bucket{agent_name=~".+"}[5m])
+          ) > 300
+        for: 10m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "High agent execution time"
+          description: "{{ $labels.agent_name }} P95 execution time is {{ $value }}s"
+
+      - alert: AgentQueueBacklog
+        expr: agent_queue_length > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "Agent request queue backlog"
+          description: "{{ $value }} requests pending for {{ $labels.agent_name }}"
+
+  - name: juben_resource_alerts
+    interval: 30s
+    rules:
+      # System Resource Alerts
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: VeryHighCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Very high CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes
+          ) / node_memory_MemTotal_bytes > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Low disk space"
+          description: "Only {{ $value | humanizePercentage }} disk space available on {{ $labels.instance }}"
+
+      - alert: DiskSpaceCritical
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Critical disk space"
+          description: "Only {{ $value | humanizePercentage }} disk space available on {{ $labels.instance }}"
+
+  - name: juben_business_alerts
+    interval: 1m
+    rules:
+      # Business Metrics Alerts
+      - alert: LowActiveUsers
+        expr: |
+          sum_over_time(active_users_total[1h]) < 10
+        for: 30m
+        labels:
+          severity: info
+          service: business
+        annotations:
+          summary: "Low active user count"
+          description: "Only {{ $value }} active users in the last hour"
+
+      - alert: HighRequestVolume
+        expr: |
+          sum(rate(http_requests_total{job="juben-api"}[5m])) > 1000
+        for: 10m
+        labels:
+          severity: info
+          service: business
+        annotations:
+          summary: "High request volume"
+          description: "Request rate is {{ $value }} req/s"
+
+      - alert: AgentOutputStorageFailure
+        expr: |
+          rate(agent_output_save_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "Agent output save failures"
+          description: "Agent output save failure rate is {{ $value }} per second"
+
+      - alert: TokenCostAnomaly
+        expr: |
+          rate(token_cost_total[1h]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          service: billing
+        annotations:
+          summary: "High token cost rate"
+          description: "Token cost rate is ${{ $value }}/hour"
+
+  - name: juben_security_alerts
+    interval: 30s
+    rules:
+      # Security Alerts
+      - alert: HighAuthenticationFailureRate
+        expr: |
+          (
+            rate(auth_requests_total{status="failed"}[5m])
+            /
+            rate(auth_requests_total[5m])
+          ) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value | humanizePercentage }} of authentication requests are failing"
+
+      - alert: PossibleBruteForceAttack
+        expr: |
+          rate(auth_requests_total{status="failed"}[1m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Possible brute force attack detected"
+          description: "{{ $value }} failed auth requests/sec from single IP"
+
+      - alert: HighRateLimitViolations
+        expr: |
+          rate(rate_limit_violations_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High rate limit violation count"
+          description: "{{ $value }} rate limit violations/sec"

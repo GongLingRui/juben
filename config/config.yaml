@@ -1,0 +1,260 @@
+# 竖屏短剧策划助手配置文件
+
+# 模型配置
+models:
+  default_provider: "zhipu"  # 默认模型提供商
+  providers:
+    # 智谱AI - 免费模型配置
+    zhipu:
+      enabled: true
+      api_key: "${ZHIPU_API_KEY}"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+
+      # 默认模型配置
+      model: "glm-4-flash"
+      temperature: 0.7
+      max_tokens: 4096
+
+      # 可用模型列表（免费）
+      available_models:
+        # 通用文本模型
+        - name: "glm-4-flash"
+          display_name: "GLM-4-Flash (免费)"
+          type: "text"
+          description: "快速响应的文本生成模型"
+          max_tokens: 128000
+          default: true
+
+        - name: "glm-4.7-flash"
+          display_name: "GLM-4.7-Flash (免费)"
+          type: "text"
+          description: "最新版快速文本生成"
+          max_tokens: 128000
+
+        - name: "glm-4-flash-250414"
+          display_name: "GLM-4-Flash-250414 (免费)"
+          type: "text"
+          description: "特定版本Flash模型"
+          max_tokens: 128000
+
+        - name: "glm-4.1v-thinking-flash"
+          display_name: "GLM-4.1V-Thinking-Flash (免费)"
+          type: "text"
+          description: "带思考链的推理模型"
+          max_tokens: 128000
+          thinking_enabled: true
+
+        # 视觉理解模型
+        - name: "glm-4v-flash"
+          display_name: "GLM-4V-Flash (免费)"
+          type: "vision"
+          description: "视觉理解模型"
+          supports: ["image", "video_frame"]
+
+        - name: "glm-4.6v-flash"
+          display_name: "GLM-4.6V-Flash (免费)"
+          type: "vision"
+          description: "最新视觉理解模型"
+          supports: ["image", "video_frame"]
+
+        # 图像生成模型
+        - name: "cogview-3-flash"
+          display_name: "Cogview-3-Flash (免费)"
+          type: "image_generation"
+          description: "图像生成模型"
+          supports: ["text_to_image"]
+
+        # 视频生成模型
+        - name: "cogvideox-flash"
+          display_name: "CogVideoX-Flash (免费)"
+          type: "video_generation"
+          description: "视频生成模型"
+          supports: ["text_to_video"]
+
+      # 模型使用场景映射
+      model_mapping:
+        # 默认使用快速模型
+        default: "glm-4-flash"
+
+        # 需要推理的场景使用思考模型
+        reasoning: "glm-4.1v-thinking-flash"
+
+        # 需要视觉理解的场景
+        vision: "glm-4v-flash"
+
+        # 图像生成
+        image_gen: "cogview-3-flash"
+
+        # 视频生成
+        video_gen: "cogvideox-flash"
+
+        # 最新最佳模型
+        latest: "glm-4.7-flash"
+
+    # OpenRouter (备用)
+    openrouter:
+      enabled: true
+      api_key: "${OPENROUTER_API_KEY}"
+      model: "meta-llama/llama-3.3-70b-instruct"
+      base_url: "https://openrouter.ai/api/v1"
+      temperature: 0.7
+      max_tokens: 4096
+
+    # OpenAI (可选，付费)
+    openai:
+      enabled: false
+      api_key: "${OPENAI_API_KEY}"
+      model: "gpt-4o"
+      base_url: "https://api.openai.com/v1"
+      temperature: 0.7
+      max_tokens: 4096
+
+# Agent专用模型配置
+agent_models:
+  # 编排器使用最新最快模型
+  orchestrator:
+    model: "glm-4-flash"
+    temperature: 0.5
+
+  # 接待员使用快速模型
+  concierge:
+    model: "glm-4-flash"
+    temperature: 0.4
+
+  # 知识查询使用思考模型
+  knowledge:
+    model: "glm-4.1v-thinking-flash"
+    temperature: 0.3
+
+  # 创作使用最新模型
+  creation:
+    model: "glm-4.7-flash"
+    temperature: 0.6
+
+  # 评估使用思考模型
+  evaluation:
+    model: "glm-4.1v-thinking-flash"
+    temperature: 0.2
+
+  # 视觉相关使用视觉模型
+  vision:
+    model: "glm-4v-flash"
+    temperature: 0.4
+
+  # 图像生成
+  image_gen:
+    model: "cogview-3-flash"
+
+  # 视频生成
+  video_gen:
+    model: "cogvideox-flash"
+
+# 搜索配置
+search:
+  enabled: true
+  auto_search: true
+  confidence_threshold: 0.5
+
+# 知识库配置
+knowledge_base:
+  enabled: true
+  auto_search: true
+  confidence_threshold: 0.5
+
+  collections:
+    script_segments:
+      name: "script_segments_collection"
+      description: "剧本桥段库"
+      dimension: 768
+      metric_type: "COSINE"
+      top_k: 5
+      score_threshold: 0.7
+
+    drama_highlights:
+      name: "drama_highlights_collection"
+      description: "短剧高能情节库"
+      dimension: 768
+      metric_type: "COSINE"
+      top_k: 5
+      score_threshold: 0.7
+
+# 意图识别配置
+intent_recognition:
+  enabled: true
+  confidence_threshold: 0.3
+  patterns:
+    web_search:
+      keywords: ["最新", "热门", "趋势", "市场", "竞品", "分析", "数据", "统计", "报告", "新闻", "资讯"]
+      patterns: ["最新.*?信息", "市场.*?分析", "竞品.*?对比", "行业.*?趋势", "数据.*?统计"]
+
+    knowledge_base:
+      keywords: ["桥段", "情节", "套路", "模板", "技巧", "方法", "创作", "写作", "剧本", "故事", "人物", "对话"]
+      patterns: ["创作.*?技巧", "写作.*?方法", "剧本.*?结构", "人物.*?塑造", "情节.*?设计"]
+
+    url_extraction:
+      keywords: ["链接", "网址", "文档", "文件", "资料"]
+      patterns: ["https?://[^\\s]+", "www\\.[^\\s]+", "\\.pdf", "\\.doc", "\\.docx", "\\.txt"]
+
+    creation_assistance:
+      keywords: ["策划", "创作", "写作", "剧本", "故事", "人物", "情节", "对话", "大纲", "结构", "主题", "风格", "类型", "题材", "设定"]
+      patterns: ["帮我.*?创作", "如何.*?写", "怎么.*?策划", "创作.*?建议"]
+
+    image_generation:
+      keywords: ["图片", "图像", "生成图", "海报", "封面"]
+      patterns: ["生成.*?图片", "创建.*?图像", "设计.*?海报"]
+      model: "cogview-3-flash"
+
+    video_generation:
+      keywords: ["视频", "短片", "动画", "生成视频"]
+      patterns: ["生成.*?视频", "制作.*?短片"]
+      model: "cogvideox-flash"
+
+# 竖屏短剧策划配置
+drama_planning:
+  # 系统提示词配置
+  system_prompt:
+    enabled: true
+    version: "1.0"
+
+  # 工作流程配置
+  workflow:
+    auto_intent_recognition: true
+    auto_web_search: true
+    auto_knowledge_search: true
+    auto_url_extraction: true
+
+  # 输出配置
+  output:
+    include_references: true
+    include_sources: true
+    max_response_length: 8192
+    stream_chunk_size: 100
+
+# 日志配置
+logging:
+  level: "INFO"
+  log_requests: true
+  log_responses: false
+  log_errors: true
+
+# 性能配置
+performance:
+  timeout: 30
+  max_retries: 3
+  connection_pool_size: 10
+  enable_caching: true
+  cache_ttl: 3600
+
+# 免费模型使用统计
+free_model_stats:
+  track_usage: true
+  log_requests: true
+  models:
+    - "glm-4-flash"
+    - "glm-4.7-flash"
+    - "glm-4.6v-flash"
+    - "glm-4.1v-thinking-flash"
+    - "glm-4-flash-250414"
+    - "glm-4v-flash"
+    - "cogview-3-flash"
+    - "cogvideox-flash"

@@ -1,0 +1,131 @@
+# 敏感信息 - 必须忽略
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 所有环境变量文件（除了 .env.example）
+.env.*
+!.env.example
+
+# API 密钥和凭证
+*credentials*
+*secret*
+*.key
+*.pem
+secrets/
+credentials/
+
+# 数据库
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node
+node_modules/
+dist/
+build/
+.npm/
+.yarn/
+.pnpm-store/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.*
+*.cover
+.hypothesis/
+.pytest_cache/
+migrations/.env.py
+
+# 虚拟环境
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.iws
+.idea_modules/
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 项目特定
+uploads/
+files/
+temp/
+cache/
+.cache/
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+
+# Docker
+docker-compose.override.yml
+
+# 备份文件
+*.bak
+*.backup
+*.old

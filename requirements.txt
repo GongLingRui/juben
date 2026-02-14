@@ -1,0 +1,77 @@
+# 竖屏短剧策划助手 - 依赖包列表
+
+# Web框架
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 数据验证和配置
+pydantic==2.5.0
+python-dotenv==1.0.0
+
+# HTTP客户端
+aiohttp==3.9.0
+httpx==0.25.0
+
+# 智谱AI
+zhipuai==2.1.5.20250825
+
+# 阿里云
+dashscope==1.14.0
+
+# OpenAI (可选)
+openai==1.3.0
+
+# LangSmith追踪
+langsmith==0.0.69
+langchain==0.1.0
+langchain-community==0.0.10
+
+# 数据处理
+numpy==1.24.0
+
+# 数据处理
+pyyaml==6.0.1
+
+# 数据库和存储
+asyncpg==0.29.0
+redis==5.0.0
+pymilvus==2.4.0
+
+# 日志和监控
+structlog==23.2.0
+prometheus-client==0.20.0
+
+# 开发工具
+pytest==7.4.0
+pytest-asyncio==0.21.0
+pytest-cov==4.1.0
+black==23.11.0
+flake8==6.1.0
+pytest-mock==3.12.0
+
+# 其他工具
+pathlib2==2.3.7
+typing-extensions==4.8.0
+
+# 缺失的依赖
+pydantic-settings==2.0.0
+psutil==5.9.0
+
+# 认证和安全
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# 性能优化
+tenacity==8.2.0
+backoff==2.2.0
+
+# 高级功能
+cachetools==5.3.0
+ujson==5.8.0
+
+# 图数据库
+neo4j==5.14.0
+aiofiles==23.2.1
+faster-whisper==1.0.0
+soundfile==0.12.1
