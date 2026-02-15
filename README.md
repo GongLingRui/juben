@@ -7,6 +7,12 @@
 **创建时间**: 2026年
 **项目类型**: AI 剧本创作辅助系统
 
+# 剧本知识库：
+https://github.com/GongLingRui/skills
+
+# 影视创作skills：
+https://github.com/GongLingRui/screen-creative-skills
+
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-brightgreen.svg)](https://www.python.org/)
 [![React](https://img.shields.io/badge/react-18+-61DAFB.svg)](https://reactjs.org/)
