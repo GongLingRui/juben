@@ -3,6 +3,14 @@
 > 专业的短剧策划、创作、评估平台 - 支持 40+ AI Agents
 > 黑白简明设计风格 | 生产级前后端分离架构
 
+<img width="1224" height="705" alt="image" src="https://github.com/user-attachments/assets/9c4f9b0e-a268-4f32-a1dc-d7be0d0a20da" />
+
+<img width="1234" height="734" alt="image" src="https://github.com/user-attachments/assets/1cd4c98e-691a-469f-baee-73277e9a8b92" />
+
+
+<img width="1247" height="739" alt="image" src="https://github.com/user-attachments/assets/4f1c5b31-6a38-4817-948a-4a99ccfb73ac" />
+
+
 **作者**: 宫灵瑞
 **创建时间**: 2026年
 **项目类型**: AI 剧本创作辅助系统
